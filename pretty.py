@@ -86,8 +86,10 @@ def pretty_angle(a: str, b: str, c: str, d: str) -> str:
     c, d = d, c
 
   if a == c:
-    return f'\u2220{b}{a}{d}'
-  return f'\u2220({a}{b}-{c}{d})'
+    #return f'\u2220{b}{a}{d}'
+    return f'\\angle {b}{a}{d}'
+  #return f'\u2220({a}{b}-{c}{d})'
+  return f'\\angle ({a}{b}-{c}{d})'
 
 
 def pretty_nl(name: str, args: list[str]) -> str:
@@ -124,24 +126,31 @@ def pretty_nl(name: str, args: list[str]) -> str:
   if name in ['perp', 'T']:
     if len(args) == 2:  # this is algebraic derivation.
       ab, cd = args  # ab = 'd( ... )'
-      return f'{ab} \u27c2 {cd}'
+      #return f'{ab} \u27c2 {cd}'
+      return f'{ab} \\perp {cd}'
     a, b, c, d = args
-    return f'{a}{b} \u27c2 {c}{d}'
+    #return f'{a}{b} \u27c2 {c}{d}'
+    return f'{a}{b} \\perp {c}{d}'
   if name in ['para', 'P']:
     if len(args) == 2:  # this is algebraic derivation.
       ab, cd = args  # ab = 'd( ... )'
-      return f'{ab} \u2225 {cd}'
+      #return f'{ab} \u2225 {cd}'
+      return f'{ab} \\parallel {cd}'
     a, b, c, d = args
-    return f'{a}{b} \u2225 {c}{d}'
+    #return f'{a}{b} \u2225 {c}{d}'
+    return f'{a}{b} \\parallel {c}{d}'
   if name in ['simtri2', 'simtri', 'simtri*']:
     a, b, c, x, y, z = args
-    return f'\u0394{a}{b}{c} is similar to \u0394{x}{y}{z}'
+    #return f'\u0394{a}{b}{c} is similar to \u0394{x}{y}{z}'
+    return f'\\triangle {a}{b}{c} is similar to \\triangle {x}{y}{z}'
   if name in ['contri2', 'contri', 'contri*']:
     a, b, c, x, y, z = args
-    return f'\u0394{a}{b}{c} is congruent to \u0394{x}{y}{z}'
+    #return f'\u0394{a}{b}{c} is congruent to \u0394{x}{y}{z}'
+    return f'\\triangle {a}{b}{c} is congruent to \\triangle {x}{y}{z}'
   if name in ['circle', 'I']:
     o, a, b, c = args
-    return f'{o} is the circumcenter of \\Delta {a}{b}{c}'
+    #return f'{o} is the circumcenter of \\Delta {a}{b}{c}'
+    return f'{o} is the circumcenter of \\triangle {a}{b}{c}'
   if name == 'foot':
     a, b, c, d = args
     return f'{a} is the foot of {b} on {c}{d}'

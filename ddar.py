@@ -30,7 +30,7 @@ def saturate_or_goal(
     level_times: list[float],
     p: pr.Problem,
     max_level: int = 100,
-    timeout: int = 600,
+    timeout: int = 3600,
 ) -> tuple[
     list[dict[str, list[tuple[gh.Point, ...]]]],
     list[dict[str, list[tuple[gh.Point, ...]]]],
@@ -47,11 +47,14 @@ def saturate_or_goal(
     level = len(level_times) + 1
 
     t = time.time()
+    t0 = time.clock_gettime(time.CLOCK_REALTIME)
     added, derv, eq4, n_branching = dd.bfs_one_level(
         g, theorems, level, p, verbose=False, nm_check=True, timeout=timeout
     )
     all_added += added
     branching.append(n_branching)
+    t1 = time.clock_gettime(time.CLOCK_REALTIME)
+    print("DEBUG:  ddar.saturate_or_goal: bfs_one_level: dt={:.09}".format(t1 - t0))
 
     derives.append(derv)
     eq4s.append(eq4)
@@ -60,10 +63,13 @@ def saturate_or_goal(
     logging.info(f'Depth {level}/{max_level} time = {level_time}')  # pylint: disable=logging-fstring-interpolation
     level_times.append(level_time)
 
+    t0 = time.clock_gettime(time.CLOCK_REALTIME)
     if p.goal is not None:
       goal_args = list(map(lambda x: g.get(x, lambda: int(x)), p.goal.args))
       if g.check(p.goal.name, goal_args):  # found goal
         break
+    t1 = time.clock_gettime(time.CLOCK_REALTIME)
+    print("DEBUG:  ddar.saturate_or_goal: check goal: dt={:.09}".format(t1 - t0))
 
     if not added:  # saturated
       break
@@ -79,7 +85,7 @@ def solve(
     theorems: list[pr.Problem],
     controller: pr.Problem,
     max_level: int = 1000,
-    timeout: int = 600,
+    timeout: int = 3600,
 ) -> tuple[gh.Graph, list[float], str, list[int], list[pr.Dependency]]:
   """Alternate between DD and AR until goal is found."""
   status = 'saturated'
@@ -92,6 +98,7 @@ def solve(
   all_added = []
 
   while len(level_times) < max_level:
+    t0 = time.clock_gettime(time.CLOCK_REALTIME)
     dervs, eq4, next_branches, added = saturate_or_goal(
         g, theorems, level_times, controller, max_level, timeout=timeout
     )
@@ -101,29 +108,42 @@ def solve(
     eq4s += eq4
     branches += next_branches
 
+    t1 = time.clock_gettime(time.CLOCK_REALTIME)
+    print("DEBUG:  ddar.solve: saturate_or_goal: dt={:.09}".format(t1 - t0))
+
     # Now, it is either goal or saturated
+    t0 = time.clock_gettime(time.CLOCK_REALTIME)
     if controller.goal is not None:
       goal_args = g.names2points(controller.goal.args)
       if g.check(controller.goal.name, goal_args):  # found goal
         status = 'solved'
         break
+    t1 = time.clock_gettime(time.CLOCK_REALTIME)
+    print("DEBUG:  ddar.solve: check goal: dt={:.09}".format(t1 - t0))
 
     if not derives:  # officially saturated.
       break
 
     # Now we resort to algebra derivations.
+    t0 = time.clock_gettime(time.CLOCK_REALTIME)
     added = []
     while derives and not added:
       added += dd.apply_derivations(g, derives.pop(0))
+    t1 = time.clock_gettime(time.CLOCK_REALTIME)
+    print("DEBUG:  ddar.solve: apply_derivations 1: dt={:.09}".format(t1 - t0))
 
     if added:
       continue
 
     # Final help from AR.
+    t0 = time.clock_gettime(time.CLOCK_REALTIME)
     while eq4s and not added:
       added += dd.apply_derivations(g, eq4s.pop(0))
 
     all_added += added
+
+    t1 = time.clock_gettime(time.CLOCK_REALTIME)
+    print("DEBUG:  ddar.solve: apply_derivations 2: dt={:.09}".format(t1 - t0))
 
     if not added:  # Nothing left. saturated.
       break

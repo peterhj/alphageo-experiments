@@ -1012,7 +1012,7 @@ def bfs_one_level(
     controller: pr.Problem,
     verbose: bool = False,
     nm_check: bool = False,
-    timeout: int = 600,
+    timeout: int = 3600,
 ) -> tuple[
     list[pr.Dependency],
     dict[str, list[tuple[gm.Point, ...]]],
@@ -1022,9 +1022,13 @@ def bfs_one_level(
   """Forward deduce one breadth-first level."""
 
   # Step 1: match all theorems:
+  t0_ = time.clock_gettime(time.CLOCK_REALTIME)
   theorem2mappings = match_all_theorems(g, theorems, controller.goal)
+  t1 = time.clock_gettime(time.CLOCK_REALTIME)
+  print("DEBUG:  dd.bfs_one_level: match: dt={:.09}".format(t1 - t0_))
 
   # Step 2: traceback for each deduce:
+  t0_ = time.clock_gettime(time.CLOCK_REALTIME)
   theorem2deps = {}
   t0 = time.time()
   for theorem, mappings in theorem2mappings.items():
@@ -1079,8 +1083,12 @@ def bfs_one_level(
 
   theorem2deps = list(theorem2deps.items())
 
+  t1 = time.clock_gettime(time.CLOCK_REALTIME)
+  print("DEBUG:  dd.bfs_one_level: traceback: dt={:.09}".format(t1 - t0_))
+
   # Step 3: add conclusions to graph.
   # Note that we do NOT mix step 2 and 3, strictly going for BFS.
+  t0_ = time.clock_gettime(time.CLOCK_REALTIME)
   added = []
   for theorem, mp_deps in theorem2deps:
     for mp, deps in mp_deps:
@@ -1096,7 +1104,11 @@ def bfs_one_level(
 
   branching = len(added)
 
+  t1 = time.clock_gettime(time.CLOCK_REALTIME)
+  print("DEBUG:  dd.bfs_one_level: add conclusions: dt={:.09}".format(t1 - t0_))
+
   # Check if goal is found
+  t0_ = time.clock_gettime(time.CLOCK_REALTIME)
   if controller.goal:
     args = []
 
@@ -1111,11 +1123,16 @@ def bfs_one_level(
 
     if g.check(controller.goal.name, args):
       return added, {}, {}, branching
+  t1 = time.clock_gettime(time.CLOCK_REALTIME)
+  print("DEBUG:  dd.bfs_one_level: check goal: dt={:.09}".format(t1 - t0_))
 
   # Run AR, but do NOT apply to the proof state (yet).
+  t0_ = time.clock_gettime(time.CLOCK_REALTIME)
   for dep in added:
     g.add_algebra(dep, level)
   derives, eq4s = g.derive_algebra(level, verbose=False)
+  t1 = time.clock_gettime(time.CLOCK_REALTIME)
+  print("DEBUG:  dd.bfs_one_level: run ar: dt={:.09}".format(t1 - t0_))
 
   branching += sum([len(x) for x in derives.values()])
   branching += sum([len(x) for x in eq4s.values()])

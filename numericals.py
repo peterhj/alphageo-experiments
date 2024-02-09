@@ -20,14 +20,14 @@ import math
 from typing import Any, Optional, Union
 
 import geometry as gm
-import matplotlib
-from matplotlib import pyplot as plt
-import matplotlib.colors as mcolors
+#import matplotlib
+#from matplotlib import pyplot as plt
+#import matplotlib.colors as mcolors
 import numpy as np
 from numpy.random import uniform as unif  # pylint: disable=g-importing-member
 
 
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 
 ATOM = 1e-12
@@ -702,7 +702,7 @@ def check_perp(points: list[Point]) -> bool:
 
 def check_cyclic(points: list[Point]) -> bool:
   points = list(set(points))
-  (a, b, c), *ps = points
+  a, b, c, *ps = points
   circle = Circle(p1=a, p2=b, p3=c)
   for d in ps:
     if not close_enough(d.distance(circle.center), circle.radius):
